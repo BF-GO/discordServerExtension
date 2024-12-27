@@ -1,7 +1,11 @@
-// content.js
-
 (function () {
 	console.log('Discord Server Tracker: Content script loaded.');
+
+	let isActive = true;
+
+	window.addEventListener('beforeunload', () => {
+		isActive = false;
+	});
 
 	function getServerId(block) {
 		const link = block.querySelector('a[href^="/"]');
@@ -51,6 +55,11 @@
 	}
 
 	function refreshButtons() {
+		if (!isActive) {
+			console.warn('Extension context invalidated. Skipping refreshButtons.');
+			return;
+		}
+
 		console.log('Discord Server Tracker: Refreshing buttons...');
 		const serverBlocks = document.querySelectorAll('.guildApp__guild');
 		console.log(`Refreshing ${serverBlocks.length} server blocks.`);
@@ -63,29 +72,48 @@
 				const serverId = getServerId(block);
 				if (!serverId) return;
 
-				chrome.storage.local.get([serverId], (result) => {
-					if (chrome.runtime.lastError) {
-						console.error(
-							`Error retrieving data for server ID ${serverId}:`,
-							chrome.runtime.lastError
-						);
-						return;
-					}
-					const serverData = result[serverId];
-					if (serverData) {
-						const { count, name, link } = serverData;
-						console.log(
-							`Server ID: ${serverId}, Count: ${count}, Name: ${name}, Link: ${link}`
-						);
-						updateButton(joinButton, count);
-					}
-				});
+				try {
+					chrome.storage.local.get([serverId], (result) => {
+						if (!isActive) {
+							console.warn(
+								'Extension context invalidated during storage.get callback.'
+							);
+							return;
+						}
+
+						if (chrome.runtime.lastError) {
+							console.error(
+								`Error retrieving data for server ID ${serverId}:`,
+								chrome.runtime.lastError
+							);
+							return;
+						}
+						const serverData = result[serverId];
+						if (serverData) {
+							const { count, name, link } = serverData;
+							console.log(
+								`Server ID: ${serverId}, Count: ${count}, Name: ${name}, Link: ${link}`
+							);
+							updateButton(joinButton, count);
+						}
+					});
+				} catch (error) {
+					console.error(
+						`Failed to get storage data for server ID ${serverId}:`,
+						error
+					);
+				}
 			}
 		});
 	}
 
 	function setupEventDelegation() {
 		document.body.addEventListener('click', function (event) {
+			if (!isActive) {
+				console.warn('Extension context invalidated. Skipping event handling.');
+				return;
+			}
+
 			const target = event.target;
 			const joinButton = target.closest('.server__header__label-join__button');
 
@@ -102,46 +130,72 @@
 				const serverName = getServerName(serverBlock);
 				const serverLink = `https://server-discord.com/${serverId}`;
 
-				chrome.storage.local.get([serverId], (result) => {
-					if (chrome.runtime.lastError) {
-						console.error(
-							`Error retrieving data for server ID ${serverId}:`,
-							chrome.runtime.lastError
-						);
-						return;
-					}
-					let serverData = result[serverId] || {
-						count: 0,
-						name: serverName,
-						link: serverLink,
-					};
-					serverData.count += 1;
-					console.log(
-						`Incrementing count for server ID ${serverId} to ${serverData.count}`
-					);
+				try {
+					chrome.storage.local.get([serverId], (result) => {
+						if (!isActive) {
+							console.warn(
+								'Extension context invalidated during storage.get callback.'
+							);
+							return;
+						}
 
-					let data = {};
-					data[serverId] = serverData;
-					chrome.storage.local.set(data, () => {
 						if (chrome.runtime.lastError) {
 							console.error(
-								`Error setting data for server ID ${serverId}:`,
+								`Error retrieving data for server ID ${serverId}:`,
 								chrome.runtime.lastError
 							);
 							return;
 						}
+						let serverData = result[serverId] || {
+							count: 0,
+							name: serverName,
+							link: serverLink,
+						};
+						serverData.count += 1;
 						console.log(
-							`Count for server ID ${serverId} set to ${serverData.count}`
+							`Incrementing count for server ID ${serverId} to ${serverData.count}`
 						);
-						updateButton(joinButton, serverData.count);
+
+						let data = {};
+						data[serverId] = serverData;
+						chrome.storage.local.set(data, () => {
+							if (!isActive) {
+								console.warn(
+									'Extension context invalidated during storage.set callback.'
+								);
+								return;
+							}
+
+							if (chrome.runtime.lastError) {
+								console.error(
+									`Error setting data for server ID ${serverId}:`,
+									chrome.runtime.lastError
+								);
+								return;
+							}
+							console.log(
+								`Count for server ID ${serverId} set to ${serverData.count}`
+							);
+							updateButton(joinButton, serverData.count);
+						});
 					});
-				});
+				} catch (error) {
+					console.error(
+						`Failed to get/set storage data for server ID ${serverId}:`,
+						error
+					);
+				}
 			}
 		});
 		console.log('Discord Server Tracker: Event delegation set up.');
 	}
 
 	function observeDOM() {
+		if (!isActive) {
+			console.warn('Extension context invalidated. Skipping DOM observation.');
+			return;
+		}
+
 		const observer = new MutationObserver((mutations) => {
 			let needsRefresh = false;
 			mutations.forEach((mutation) => {
@@ -163,7 +217,7 @@
 				}
 			});
 
-			if (needsRefresh) {
+			if (needsRefresh && isActive) {
 				refreshButtons();
 			}
 		});
@@ -173,23 +227,41 @@
 	}
 
 	function periodicRefresh() {
+		if (!isActive) {
+			console.warn('Extension context invalidated. Skipping periodic refresh.');
+			return;
+		}
+
 		setInterval(() => {
-			console.log('Discord Server Tracker: Periodic refresh of buttons.');
-			refreshButtons();
+			if (isActive) {
+				console.log('Discord Server Tracker: Periodic refresh of buttons.');
+				refreshButtons();
+			}
 		}, 5000);
 	}
 
 	function logAllStorageData() {
-		chrome.storage.local.get(null, (result) => {
-			if (chrome.runtime.lastError) {
-				console.error(
-					'Error getting all storage data:',
-					chrome.runtime.lastError
-				);
-				return;
-			}
-			console.log('All stored data:', result);
-		});
+		try {
+			chrome.storage.local.get(null, (result) => {
+				if (!isActive) {
+					console.warn(
+						'Extension context invalidated during storage.get callback.'
+					);
+					return;
+				}
+
+				if (chrome.runtime.lastError) {
+					console.error(
+						'Error getting all storage data:',
+						chrome.runtime.lastError
+					);
+					return;
+				}
+				console.log('All stored data:', result);
+			});
+		} catch (error) {
+			console.error('Failed to retrieve all storage data:', error);
+		}
 	}
 
 	function run() {
@@ -205,4 +277,9 @@
 	} else {
 		run();
 	}
+
+	window.addEventListener('unload', () => {
+		isActive = false;
+		console.log('Discord Server Tracker: Content script unloaded.');
+	});
 })();
