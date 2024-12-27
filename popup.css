@@ -1,0 +1,70 @@
+/* popup.css */
+
+body {
+	font-family: Arial, sans-serif;
+	width: 300px;
+	margin: 0;
+	padding: 10px;
+	background-color: #f4f4f4;
+}
+
+.popup-container {
+	display: flex;
+	flex-direction: column;
+}
+
+h1 {
+	font-size: 18px;
+	margin-bottom: 10px;
+	text-align: center;
+}
+
+#reset-button {
+	padding: 8px;
+	margin-bottom: 15px;
+	background-color: #ff4d4d;
+	color: white;
+	border: none;
+	border-radius: 4px;
+	cursor: pointer;
+}
+
+#reset-button:hover {
+	background-color: #ff1a1a;
+}
+
+h2 {
+	font-size: 16px;
+	margin-bottom: 5px;
+}
+
+#server-list {
+	list-style: none;
+	padding: 0;
+	max-height: 400px;
+	overflow-y: auto;
+}
+
+.server-item {
+	background-color: white;
+	padding: 8px;
+	margin-bottom: 5px;
+	border-radius: 4px;
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+}
+
+.server-name {
+	font-weight: bold;
+}
+
+.server-link {
+	text-decoration: none;
+	color: #3498db;
+	cursor: pointer;
+}
+
+.server-link:hover {
+	text-decoration: underline;
+}
