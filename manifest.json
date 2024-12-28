@@ -1,9 +1,12 @@
 {
 	"manifest_version": 3,
 	"name": "Discord Server Tracker",
-	"version": "1.0.4",
+	"version": "1.0.6",
 	"description": "Отслеживает нажатия кнопки 'Вступить' на https://server-discord.com/ и отображает количество нажатий.",
-	"permissions": ["storage"],
+	"permissions": ["storage", "activeTab", "scripting"],
+	"background": {
+		"service_worker": "background.js"
+	},
 	"action": {
 		"default_popup": "popup.html",
 		"default_icon": {

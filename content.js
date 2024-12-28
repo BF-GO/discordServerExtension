@@ -1,3 +1,5 @@
+// content.js
+
 (function () {
 	console.log('Discord Server Tracker: Content script loaded.');
 
@@ -54,7 +56,22 @@
 		}
 	}
 
-	function refreshButtons() {
+	// Функция для отправки сообщений в background.js
+	function sendMessage(message) {
+		return new Promise((resolve, reject) => {
+			chrome.runtime.sendMessage(message, (response) => {
+				if (chrome.runtime.lastError) {
+					reject(new Error(chrome.runtime.lastError.message));
+				} else if (response.error) {
+					reject(new Error(response.error));
+				} else {
+					resolve(response.data || response.success);
+				}
+			});
+		});
+	}
+
+	async function refreshButtons() {
 		if (!isActive) {
 			console.warn('Extension context invalidated. Skipping refreshButtons.');
 			return;
@@ -64,51 +81,39 @@
 		const serverBlocks = document.querySelectorAll('.guildApp__guild');
 		console.log(`Refreshing ${serverBlocks.length} server blocks.`);
 
-		serverBlocks.forEach((block) => {
+		for (const block of serverBlocks) {
 			const joinButton = block.querySelector(
 				'.server__header__label-join__button'
 			);
 			if (joinButton) {
 				const serverId = getServerId(block);
-				if (!serverId) return;
+				if (!serverId) continue;
 
 				try {
-					chrome.storage.local.get([serverId], (result) => {
-						if (!isActive) {
-							console.warn(
-								'Extension context invalidated during storage.get callback.'
-							);
-							return;
-						}
-
-						if (chrome.runtime.lastError) {
-							console.error(
-								`Error retrieving data for server ID ${serverId}:`,
-								chrome.runtime.lastError
-							);
-							return;
-						}
-						const serverData = result[serverId];
-						if (serverData) {
-							const { count, name, link } = serverData;
-							console.log(
-								`Server ID: ${serverId}, Count: ${count}, Name: ${name}, Link: ${link}`
-							);
-							updateButton(joinButton, count);
-						}
+					const result = await sendMessage({
+						action: 'getStorage',
+						keys: [serverId],
 					});
+					const serverData = result ? result[serverId] : null;
+					if (serverData) {
+						const { count, name, link } = serverData;
+						console.log(
+							`Server ID: ${serverId}, Count: ${count}, Name: ${name}, Link: ${link}`
+						);
+						updateButton(joinButton, count);
+					}
 				} catch (error) {
 					console.error(
-						`Failed to get storage data for server ID ${serverId}:`,
+						`Error retrieving data for server ID ${serverId}:`,
 						error
 					);
 				}
 			}
-		});
+		}
 	}
 
 	function setupEventDelegation() {
-		document.body.addEventListener('click', function (event) {
+		document.body.addEventListener('click', async function (event) {
 			if (!isActive) {
 				console.warn('Extension context invalidated. Skipping event handling.');
 				return;
@@ -131,54 +136,34 @@
 				const serverLink = `https://server-discord.com/${serverId}`;
 
 				try {
-					chrome.storage.local.get([serverId], (result) => {
-						if (!isActive) {
-							console.warn(
-								'Extension context invalidated during storage.get callback.'
-							);
-							return;
-						}
-
-						if (chrome.runtime.lastError) {
-							console.error(
-								`Error retrieving data for server ID ${serverId}:`,
-								chrome.runtime.lastError
-							);
-							return;
-						}
-						let serverData = result[serverId] || {
+					const result = await sendMessage({
+						action: 'getStorage',
+						keys: [serverId],
+					});
+					let serverData = result ? result[serverId] : null;
+					if (!serverData) {
+						serverData = {
 							count: 0,
 							name: serverName,
 							link: serverLink,
 						};
-						serverData.count += 1;
-						console.log(
-							`Incrementing count for server ID ${serverId} to ${serverData.count}`
-						);
+					}
+					serverData.count += 1;
+					console.log(
+						`Incrementing count for server ID ${serverId} to ${serverData.count}`
+					);
 
-						let data = {};
-						data[serverId] = serverData;
-						chrome.storage.local.set(data, () => {
-							if (!isActive) {
-								console.warn(
-									'Extension context invalidated during storage.set callback.'
-								);
-								return;
-							}
-
-							if (chrome.runtime.lastError) {
-								console.error(
-									`Error setting data for server ID ${serverId}:`,
-									chrome.runtime.lastError
-								);
-								return;
-							}
-							console.log(
-								`Count for server ID ${serverId} set to ${serverData.count}`
-							);
-							updateButton(joinButton, serverData.count);
-						});
+					await sendMessage({
+						action: 'setStorage',
+						data: { [serverId]: serverData },
 					});
+					console.log(
+						`Count for server ID ${serverId} set to ${serverData.count}`
+					);
+					updateButton(joinButton, serverData.count);
+
+					// Отправляем сообщение об изменении хранилища для обновления popup
+					chrome.runtime.sendMessage({ action: 'storageChanged' });
 				} catch (error) {
 					console.error(
 						`Failed to get/set storage data for server ID ${serverId}:`,
@@ -241,27 +226,13 @@
 	}
 
 	function logAllStorageData() {
-		try {
-			chrome.storage.local.get(null, (result) => {
-				if (!isActive) {
-					console.warn(
-						'Extension context invalidated during storage.get callback.'
-					);
-					return;
-				}
-
-				if (chrome.runtime.lastError) {
-					console.error(
-						'Error getting all storage data:',
-						chrome.runtime.lastError
-					);
-					return;
-				}
-				console.log('All stored data:', result);
+		sendMessage({ action: 'getAllStorage' })
+			.then((data) => {
+				console.log('All stored data:', data);
+			})
+			.catch((error) => {
+				console.error('Failed to retrieve all storage data:', error);
 			});
-		} catch (error) {
-			console.error('Failed to retrieve all storage data:', error);
-		}
 	}
 
 	function run() {
