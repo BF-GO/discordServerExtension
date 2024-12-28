@@ -1,4 +1,3 @@
-<!-- popup.html -->
 <!DOCTYPE html>
 <html lang="ru">
 	<head>
@@ -13,14 +12,32 @@
 	<body>
 		<div class="popup-container">
 			<header>
-				<h1><i class="fab fa-discord"></i> Discord Server Tracker</h1>
+				<h1>Discord Server Tracker</h1>
 				<button id="reset-button" title="Сбросить все счетчики">
-					<i class="fas fa-redo"></i>
+					<span class="reset-icon"></span> Сбросить
 				</button>
 			</header>
 			<main>
 				<h2>Список серверов:</h2>
+				<input type="text" id="search-input" placeholder="Поиск сервера..." />
 				<ul id="server-list"></ul>
+				<div id="pagination" class="pagination">
+					<button
+						id="prev-page"
+						class="pagination-button"
+						title="Предыдущая страница"
+					>
+						&larr;
+					</button>
+					<span id="page-info">Страница 1 из 1</span>
+					<button
+						id="next-page"
+						class="pagination-button"
+						title="Следующая страница"
+					>
+						&rarr;
+					</button>
+				</div>
 			</main>
 		</div>
 		<script src="popup.js"></script>

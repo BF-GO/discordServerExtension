@@ -1,18 +1,45 @@
 /* popup.css */
 
+:root {
+	--background-color: #2c2f33;
+	--header-color: #23272a;
+	--button-color: #7289da;
+	--button-hover-color: #5b6eae;
+	--button-active-color: #5b6eae;
+	--text-color: #ffffff;
+	--link-color: #7289da;
+	--link-hover-color: #ff4757;
+	--server-item-bg: #23272a;
+	--server-item-hover-bg: #3a3d42;
+	--input-bg: #23272a;
+	--input-hover-bg: #3a3d42;
+	--input-focus-bg: #2c2f33;
+	--scrollbar-thumb-color: #7289da;
+	--scrollbar-thumb-hover-color: #5b6eae;
+	--pagination-button-bg: #7289da;
+	--pagination-button-hover-bg: #5b6eae;
+	--pagination-button-disabled-bg: #555555;
+	--pagination-text-color: #99aab5;
+}
+
+* {
+	box-sizing: border-box;
+}
+
 body {
 	font-family: 'Roboto', sans-serif;
 	width: 350px;
+	height: 100vh;
 	margin: 0;
 	padding: 0;
-	background-color: #2c2f33;
-	color: #ffffff;
+	background-color: var(--background-color);
+	color: var(--text-color);
+	overflow: hidden;
 }
 
 .popup-container {
 	display: flex;
 	flex-direction: column;
-	height: 100%;
 }
 
 header {
@@ -20,38 +47,64 @@ header {
 	justify-content: space-between;
 	align-items: center;
 	padding: 15px;
-	background-color: #23272a;
+	background-color: var(--header-color);
 	border-bottom: 1px solid #7289da;
 }
 
 header h1 {
 	font-size: 20px;
-	display: flex;
-	align-items: center;
-}
-
-header h1 i {
-	margin-right: 8px;
-	color: #7289da;
+	font-weight: 500;
+	margin: 0;
 }
 
 #reset-button {
-	background: none;
+	display: flex;
+	align-items: center;
+	background-color: var(--button-color);
 	border: none;
-	color: #7289da;
-	font-size: 18px;
+	color: var(--text-color);
+	padding: 8px 12px;
+	border-radius: 5px;
 	cursor: pointer;
-	transition: color 0.3s;
+	font-size: 14px;
+	transition: background-color 0.3s, transform 0.2s;
 }
 
 #reset-button:hover {
-	color: #ff4757;
+	background-color: var(--button-hover-color);
+	transform: translateY(-2px);
+}
+
+#reset-button:active {
+	transform: translateY(0);
+}
+
+.reset-icon {
+	display: inline-block;
+	width: 16px;
+	height: 16px;
+	margin-right: 6px;
+	border: 2px solid var(--text-color);
+	border-top: none;
+	border-right: none;
+	transform: rotate(-45deg);
+	animation: rotate-icon 1s linear infinite;
+}
+
+@keyframes rotate-icon {
+	from {
+		transform: rotate(-45deg);
+	}
+	to {
+		transform: rotate(315deg);
+	}
 }
 
 main {
 	flex: 1;
 	padding: 15px;
 	overflow-y: auto;
+	overflow-x: hidden;
 }
 
 h2 {
@@ -59,6 +112,32 @@ h2 {
 	margin-bottom: 10px;
 	border-bottom: 1px solid #7289da;
 	padding-bottom: 5px;
+}
+
+#search-input {
+	width: 100%;
+	padding: 8px 12px;
+	margin-bottom: 15px;
+	border: none;
+	border-radius: 5px;
+	background-color: var(--input-bg);
+	color: var(--text-color);
+	font-size: 14px;
+	outline: none;
+	transition: background-color 0.3s, border 0.3s;
+}
+
+#search-input::placeholder {
+	color: #99aab5;
+}
+
+#search-input:hover {
+	background-color: var(--input-hover-bg);
+}
+
+#search-input:focus {
+	background-color: var(--input-focus-bg);
+	border: 1px solid var(--button-color);
 }
 
 #server-list {
@@ -69,9 +148,8 @@ h2 {
 
 .server-item {
 	display: flex;
-	justify-content: space-between;
 	align-items: center;
-	background-color: #23272a;
+	background-color: var(--server-item-bg);
 	padding: 10px 15px;
 	margin-bottom: 10px;
 	border-radius: 8px;
@@ -79,36 +157,89 @@ h2 {
 }
 
 .server-item:hover {
-	background-color: #2c2f33;
+	background-color: var(--server-item-hover-bg);
 	transform: translateY(-2px);
 }
 
 .server-name {
 	font-weight: 500;
 	font-size: 14px;
-	word-break: break-word;
+	flex: 1;
+	margin-right: 10px;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.server-count {
+	font-size: 14px;
+	margin-right: 10px;
+	white-space: nowrap;
 }
 
 .server-link {
-	color: #7289da;
+	color: var(--link-color);
 	font-size: 16px;
 	text-decoration: none;
 	transition: color 0.3s;
+	flex-shrink: 0;
 }
 
 .server-link:hover {
-	color: #ff4757;
+	color: var(--link-hover-color);
 }
 
-main::-webkit-scrollbar {
-	width: 8px;
+.pagination {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	margin-top: 15px;
 }
 
-main::-webkit-scrollbar-track {
-	background: #2c2f33;
+.pagination-button {
+	background-color: var(--pagination-button-bg);
+	border: none;
+	color: var(--text-color);
+	padding: 6px 12px;
+	margin: 0 5px;
+	border-radius: 5px;
+	cursor: pointer;
+	font-size: 14px;
+	transition: background-color 0.3s;
 }
 
-main::-webkit-scrollbar-thumb {
-	background-color: #7289da;
-	border-radius: 4px;
+.pagination-button:hover:not(:disabled) {
+	background-color: var(--pagination-button-hover-bg);
+}
+
+.pagination-button:disabled {
+	background-color: var(--pagination-button-disabled-bg);
+	cursor: not-allowed;
+}
+
+#page-info {
+	font-size: 14px;
+	color: var(--pagination-text-color);
+}
+
+main::-webkit-scrollbar,
+html::-webkit-scrollbar {
+	width: 6px;
+}
+
+main::-webkit-scrollbar-track,
+html::-webkit-scrollbar-track {
+	background-color: var(--header-color);
+	border-radius: 3px;
+}
+
+main::-webkit-scrollbar-thumb,
+html::-webkit-scrollbar-thumb {
+	background-color: var(--scrollbar-thumb-color);
+	border-radius: 3px;
+}
+
+main::-webkit-scrollbar-thumb:hover,
+html::-webkit-scrollbar-thumb:hover {
+	background-color: var(--scrollbar-thumb-hover-color);
 }
